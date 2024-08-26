@@ -189,6 +189,9 @@ function toggleInventoryCamera() {
     }
 }
 
+// Create a new Audio object for the beep sound
+const beepSound = new Audio('beep.mp3');
+
 // Start camera for scanning
 function startCamera(videoElement, outputElementId) {
     billingScannerActive = true;
@@ -201,6 +204,9 @@ function startCamera(videoElement, outputElementId) {
         const selectedDeviceId = availableCameras[currentCameraIndex].deviceId;
         codeReader.decodeFromVideoDevice(selectedDeviceId, videoElement.id, (result, err) => {
             if (result) {
+                // Play the beep sound
+                beepSound.play();
+
                 document.getElementById(outputElementId).value = result.text;
                 if (outputElementId === 'billing-barcode') {
                     scanBarcode();
