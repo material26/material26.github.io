@@ -48,7 +48,7 @@ function displayInventory() {
     products.forEach((product, index) => {
         const li = document.createElement('li');
         li.innerHTML = `
-            ${product.name} - Barcode: ${product.barcode} - Quantity: ${product.quantity} - Price: ₹${product.price.toFixed(2)}
+            ${product.name} - Barcode: ${product.barcode} - Quantity: ${product.quantity} - Price: ${product.price.toFixed(2)}
             <button onclick="editProduct(${index})">Edit</button>
         `;
         inventoryList.appendChild(li);
@@ -108,7 +108,7 @@ function displayBilling() {
         totalPrice += itemTotal;
         const li = document.createElement('li');
         li.innerHTML = `
-            ${item.name} - Quantity: <input type="number" value="${item.quantity}" min="1" onchange="updateQuantity(${index}, this.value)" /> - Price: ₹${item.price.toFixed(2)} - Total: ₹${itemTotal.toFixed(2)}
+            ${item.name} - Quantity: <input type="number" value="${item.quantity}" min="1" onchange="updateQuantity(${index}, this.value)" /> - Price: ${item.price.toFixed(2)} - Total: ${itemTotal.toFixed(2)}
         `;
         billingList.appendChild(li);
     });
@@ -151,12 +151,12 @@ function printBill() {
         let y = 60; // Start y position for the items list
         billingItems.forEach(item => {
             const itemTotal = item.price * item.quantity;
-            doc.text(`${item.name} - Qty: ${item.quantity} - Price: ₹${item.price.toFixed(2)} - Total: ₹${itemTotal.toFixed(2)}`, 105, y, { align: 'center' });
+            doc.text(`${item.name} - Qty: ${item.quantity} - Price: ${item.price.toFixed(2)} - Total: ${itemTotal.toFixed(2)}`, 105, y, { align: 'center' });
             y += 10;
         });
 
         const totalPrice = billingItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-        doc.text(`Total Price: ₹${totalPrice.toFixed(2)}`, 105, y, { align: 'center' });
+        doc.text(`Total Price: ${totalPrice.toFixed(2)}`, 105, y, { align: 'center' });
 
         y += 20;
         doc.setFontSize(14);
