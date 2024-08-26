@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html><!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -7,15 +7,13 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <h1>Inventory and Billing System</h1>
-
     <nav>
         <button onclick="showSection('inventory')">Inventory</button>
         <button onclick="showSection('billing')">Billing</button>
     </nav>
 
     <div id="inventory-section" class="section">
-        <h2>Inventory</h2>
+        <h1>Inventory Management</h1>
         <div id="product-form">
             <input type="text" id="product-name" placeholder="Product Name">
             <input type="text" id="product-barcode" placeholder="Barcode">
@@ -23,26 +21,34 @@
             <input type="number" id="product-price" placeholder="Price">
             <button id="addProductButton" onclick="addProduct()">Add Product</button>
             <button onclick="toggleInventoryCamera()">Use Camera</button>
-            <video id="inventory-video" width="300" height="200" style="display:none;" autoplay></video>
+            <button onclick="switchCamera()">Switch Camera</button>
+            <video id="inventory-video" style="display:none;"></video>
         </div>
         <ul id="inventory-list"></ul>
     </div>
 
-    <div id="billing-section" class="section" style="display:none;">
-        <h2>Billing</h2>
-        <input type="text" id="customer-name" placeholder="Customer Name">
-        <input type="text" id="customer-phone" placeholder="Customer Phone">
-        <input type="text" id="billing-barcode" placeholder="Scan or Enter Barcode" oninput="scanBarcode()">
-        <button onclick="toggleBillingCamera()">Use Camera</button>
-        <video id="billing-video" width="300" height="200" style="display:none;" autoplay></video>
+    <div id="billing-section" class="section">
+        <h1>Billing</h1>
+        <div>
+            <input type="text" id="billing-barcode" placeholder="Scan Barcode">
+            <button onclick="scanBarcode()">Add to Billing</button>
+            <button onclick="toggleBillingCamera()">Use Camera</button>
+            <button onclick="switchCamera()">Switch Camera</button>
+            <video id="billing-video" style="display:none;"></video>
+        </div>
         <ul id="billing-list"></ul>
-        <p>Total Price: ₹<span id="total-price">0.00</span></p>
-        <button onclick="printBill()">Print Bill</button>
+        <div>
+            <input type="text" id="customer-name" placeholder="Customer Name">
+            <input type="text" id="customer-phone" placeholder="Customer Phone">
+            <button onclick="printBill()">Print Bill</button>
+        </div>
+        <h2>Total: ₹<span id="total-price">0.00</span></h2>
     </div>
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
     <script src="https://unpkg.com/@zxing/library@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
+
 
