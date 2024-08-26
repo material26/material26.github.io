@@ -2,7 +2,9 @@ let products = [];
 let billingItems = [];
 let editIndex = null;
 let billingScannerActive = false;
-let inventoryBackup = [];
+let currentCameraIndex = 0;
+let codeReader = new ZXing.BrowserBarcodeReader();
+let availableCameras = [];
 
 // Show a specific section
 function showSection(section) {
@@ -124,7 +126,7 @@ function updateQuantity(index, newQuantity) {
     }
 }
 
-// Print the bill as a PDF and update inventory
+// Print the bill as a PDF
 function printBill() {
     const customerName = document.getElementById('customer-name').value;
     const customerPhone = document.getElementById('customer-phone').value;
@@ -151,12 +153,6 @@ function printBill() {
             const itemTotal = item.price * item.quantity;
             doc.text(`${item.name} - Qty: ${item.quantity} - Price: ₹${item.price.toFixed(2)} - Total: ₹${itemTotal.toFixed(2)}`, 105, y, { align: 'center' });
             y += 10;
-
-            // Reduce the quantity in the inventory
-            const inventoryProduct = products.find(p => p.barcode === item.barcode);
-            if (inventoryProduct) {
-                inventoryProduct.quantity -= item.quantity;
-            }
         });
 
         const totalPrice = billingItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -168,9 +164,6 @@ function printBill() {
         doc.text('Thank you for choosing us!', 105, y, { align: 'center' });
 
         doc.save('receipt.pdf');
-        
-        // Save updated inventory
-        saveInventory();
     } else {
         alert('Please enter customer name and phone number.');
     }
@@ -201,22 +194,21 @@ function startCamera(videoElement, outputElementId) {
     billingScannerActive = true;
     videoElement.style.display = 'block';
 
-    const codeReader = new ZXing.BrowserBarcodeReader();
     codeReader.getVideoInputDevices().then((videoInputDevices) => {
-        const firstDeviceId = videoInputDevices[0].deviceId;
-        codeReader.decodeFromVideoDevice(firstDeviceId, videoElement.id, (result, err) => {
+        availableCameras = videoInputDevices;
+        const selectedDeviceId = availableCameras[currentCameraIndex].deviceId;
+        codeReader.decodeFromVideoDevice(selectedDeviceId, videoElement.id, (result, err) => {
             if (result) {
                 document.getElementById(outputElementId).value = result.text;
                 if (outputElementId === 'billing-barcode') {
                     scanBarcode();
                 }
-                // Don't stop the camera automatically; allow manual stop
             }
             if (err && !(err instanceof ZXing.NotFoundException)) {
                 console.error(err);
             }
         });
-    });
+    }).catch(err => console.error(err));
 }
 
 // Stop camera
@@ -228,6 +220,18 @@ function stopCamera(videoElement) {
         tracks.forEach(track => track.stop());
     }
     billingScannerActive = false;
+}
+
+// Switch to the next available camera
+function switchCamera() {
+    if (availableCameras.length > 1) {
+        currentCameraIndex = (currentCameraIndex + 1) % availableCameras.length;
+        const videoElement = billingScannerActive ? document.getElementById('billing-video') : document.getElementById('inventory-video');
+        stopCamera(videoElement);
+        startCamera(videoElement, billingScannerActive ? 'billing-barcode' : 'product-barcode');
+    } else {
+        alert('No additional cameras available.');
+    }
 }
 
 // Save products to local storage
@@ -244,3 +248,4 @@ function loadInventory() {
 
 // Initialize the app
 loadInventory();
+
