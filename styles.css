@@ -67,7 +67,9 @@ button:hover {
     border-bottom: 1px solid #ddd;
 }
 #video {
-    border: 1px solid #ddd;
+    width: 300px; /* Adjust width as needed */
+    height: 150px; /* Adjust height to match the aspect ratio */
+    border: 1px solid #ccc;
     margin-top: 10px;
-    border-radius: 5px;
+    object-fit: cover; /* Ensure the video covers the area */
 }

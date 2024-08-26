@@ -193,6 +193,8 @@ function toggleInventoryCamera() {
 function startCamera(videoElement, outputElementId) {
     billingScannerActive = true;
     videoElement.style.display = 'block';
+    videoElement.width = 300; // Set video width
+    videoElement.height = 150; // Set video height
 
     codeReader.getVideoInputDevices().then((videoInputDevices) => {
         availableCameras = videoInputDevices;
@@ -248,4 +250,3 @@ function loadInventory() {
 
 // Initialize the app
 loadInventory();
-
