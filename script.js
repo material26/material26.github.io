@@ -163,11 +163,14 @@ function printBill() {
         doc.setFont("helvetica", "bold");
         doc.text('Thank you for choosing us!', 105, y, { align: 'center' });
 
-        doc.save('receipt.pdf');
+        // Save the PDF with the customer name in the filename
+        const fileName = `receipt_${customerName.replace(/\s+/g, '_')}.pdf`;
+        doc.save(fileName);
     } else {
         alert('Please enter customer name and phone number.');
     }
 }
+
 
 // Function to toggle the camera scanner for billing
 function toggleBillingCamera() {
