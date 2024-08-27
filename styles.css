@@ -47,14 +47,15 @@ input, button {
 }
 
 button {
-    background-color: #28a745;
+    background-color: #0095eb;
     color: #fff;
     border: none;
     cursor: pointer;
+    width: auto;
 }
 
 button:hover {
-    background-color: #218838;
+    background-color: #276f98;
 }
 
 #inventory-list {
