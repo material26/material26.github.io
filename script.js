@@ -12,7 +12,6 @@ function showSection(section) {
     document.getElementById('billing-section').style.display = section === 'billing' ? 'block' : 'none';
 }
 
-// Add or update product in the inventory
 function addProduct() {
     const name = document.getElementById('product-name').value;
     const barcode = document.getElementById('product-barcode').value;
@@ -40,20 +39,24 @@ function addProduct() {
     }
 }
 
-// Display inventory items
+
 function displayInventory() {
     const inventoryList = document.getElementById('inventory-list');
     inventoryList.innerHTML = '';
 
     products.forEach((product, index) => {
+        // Ensure price is defined and is a number
+        const price = product.price ? product.price.toFixed(2) : '0.00';
+
         const li = document.createElement('li');
         li.innerHTML = `
-            ${product.name} - Barcode: ${product.barcode} - Quantity: ${product.quantity} - Price: ${product.price.toFixed(2)}
+            ${product.name} - Barcode: ${product.barcode} - Quantity: ${product.quantity} - Price: ${price}
             <button onclick="editProduct(${index})">Edit</button>
         `;
         inventoryList.appendChild(li);
     });
 }
+
 
 // Clear form fields
 function clearForm() {
@@ -75,7 +78,6 @@ function editProduct(index) {
     document.getElementById('addProductButton').innerText = 'Update Product';
 }
 
-// Scan barcode and update billing list
 function scanBarcode() {
     const scannedBarcode = document.getElementById('billing-barcode').value;
 
@@ -85,19 +87,22 @@ function scanBarcode() {
         const existingItem = billingItems.find(item => item.barcode === scannedBarcode);
         
         if (existingItem) {
+            // Increment the quantity in the billing list if the item already exists
             existingItem.quantity++;
         } else {
+            // Add the item to the billing list if it doesn't exist yet
             billingItems.push({ ...product, quantity: 1 });
         }
 
-        displayBilling();
-        document.getElementById('billing-barcode').value = '';
+        displayBilling(); // Update the billing display
+        document.getElementById('billing-barcode').value = ''; // Clear the input field
     } else {
         alert('Product not found.');
     }
 }
 
-// Display billing items
+
+
 function displayBilling() {
     const billingList = document.getElementById('billing-list');
     billingList.innerHTML = '';
@@ -109,6 +114,7 @@ function displayBilling() {
         const li = document.createElement('li');
         li.innerHTML = `
             ${item.name} - Quantity: <input type="number" value="${item.quantity}" min="1" onchange="updateQuantity(${index}, this.value)" /> - Price: ${item.price.toFixed(2)} - Total: ${itemTotal.toFixed(2)}
+            <button onclick="removeBillingItem(${index})">Remove</button>
         `;
         billingList.appendChild(li);
     });
@@ -116,15 +122,28 @@ function displayBilling() {
     document.getElementById('total-price').textContent = totalPrice.toFixed(2);
 }
 
-// Update quantity of a billing item
+function removeBillingItem(index) {
+    billingItems.splice(index, 1); // Remove the item from the billingItems array
+    displayBilling(); // Update the billing display
+}
+
+
+
 function updateQuantity(index, newQuantity) {
-    if (newQuantity > 0) {
-        billingItems[index].quantity = parseInt(newQuantity);
+    const item = billingItems[index];
+    const product = products.find(p => p.barcode === item.barcode);
+
+    if (newQuantity > 0 && newQuantity <= product.quantity + item.quantity) {
+        product.quantity += item.quantity - parseInt(newQuantity); // Adjust the inventory quantity
+        item.quantity = parseInt(newQuantity);
         displayBilling();
+        displayInventory();
+        saveInventory();
     } else {
-        alert('Quantity must be at least 1.');
+        alert('Invalid quantity.');
     }
 }
+
 
 // Print the bill as a PDF
 function printBill() {
@@ -138,30 +157,55 @@ function printBill() {
         const formattedDate = currentDate.toLocaleDateString();
         const formattedTime = currentDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
+        // Header Section
         doc.setFontSize(16);
         doc.setFont("helvetica", "bold");
-        doc.text('Shop Name', 105, 10, { align: 'center' });
+        doc.text('The Stopper Shoppy', 105, 10, { align: 'center' });
         doc.setFontSize(12);
         doc.setFont("helvetica", "normal");
-        doc.text(`Date: ${formattedDate}`, 105, 20, { align: 'center' });
-        doc.text(`Time: ${formattedTime}`, 105, 30, { align: 'center' });
-        doc.text(`Customer Name: ${customerName}`, 105, 40, { align: 'center' });
-        doc.text(`Customer Phone: ${customerPhone}`, 105, 50, { align: 'center' });
+        doc.text('Narayan Nagar, Latur, India', 105, 18, { align: 'center' });
+        doc.text('9156540291', 105, 26, { align: 'center' });
 
-        let y = 60; // Start y position for the items list
+        // Date, Time, and Customer Details
+        doc.setFontSize(12);
+        doc.text(`Date: ${formattedDate}`, 15, 40);
+        doc.text(`Time: ${formattedTime}`, 15, 46);
+        doc.text(`Customer Name: ${customerName}`, 15, 52);
+        doc.text(`Customer Phone: ${customerPhone}`, 15, 58);
+
+        // Item List Header
+        let y = 70;
+        doc.text('Item', 15, y);
+        doc.text('Qty', 85, y);
+        doc.text('Price', 120, y);
+        doc.text('Total', 165, y);
+        y += 6;
+        doc.line(15, y, 195, y); // Horizontal line
+        y += 10;
+
+        // Item List
         billingItems.forEach(item => {
             const itemTotal = item.price * item.quantity;
-            doc.text(`${item.name} - Qty: ${item.quantity} - Price: ${item.price.toFixed(2)} - Total: ${itemTotal.toFixed(2)}`, 105, y, { align: 'center' });
+            doc.text(item.name, 15, y);
+            doc.text(item.quantity.toString(), 85, y, { align: 'center' });
+            doc.text(item.price.toFixed(2), 120, y, { align: 'right' });
+            doc.text(itemTotal.toFixed(2), 165, y, { align: 'right' });
             y += 10;
         });
 
+        // Total Price
+        y += 10;
+        doc.setFont("helvetica", "bold");
         const totalPrice = billingItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-        doc.text(`Total Price: ${totalPrice.toFixed(2)}`, 105, y, { align: 'center' });
+        doc.text('Total Price:', 120, y, { align: 'right' });
+        doc.text(totalPrice.toFixed(2), 165, y, { align: 'right' });
 
+        // Footer Section
         y += 20;
         doc.setFontSize(14);
-        doc.setFont("helvetica", "bold");
         doc.text('Thank you for choosing us!', 105, y, { align: 'center' });
+        doc.setFontSize(12);
+        
 
         // Save the PDF with the customer name in the filename
         const fileName = `receipt_${customerName.replace(/\s+/g, '_')}.pdf`;
@@ -170,6 +214,7 @@ function printBill() {
         alert('Please enter customer name and phone number.');
     }
 }
+
 
 
 // Function to toggle the camera scanner for billing
@@ -222,6 +267,7 @@ function startCamera(videoElement, outputElementId) {
     }).catch(err => console.error(err));
 }
 
+
 // Stop camera
 function stopCamera(videoElement) {
     videoElement.style.display = 'none';
@@ -250,12 +296,17 @@ function saveInventory() {
     localStorage.setItem('products', JSON.stringify(products));
 }
 
-// Load products from local storage
 function loadInventory() {
     const savedProducts = JSON.parse(localStorage.getItem('products')) || [];
-    products = savedProducts;
+    products = savedProducts.map(p => ({
+        name: p.name || '',
+        barcode: p.barcode || '',
+        quantity: p.quantity || 0,
+        price: typeof p.price === 'number' ? p.price : 0
+    }));
     displayInventory();
 }
+
 
 // Initialize the app
 loadInventory();
