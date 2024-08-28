@@ -1,15 +1,17 @@
-<!DOCTYPE html><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inventory and Billing System</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.0/dist/JsBarcode.all.min.js"></script>
 </head>
 <body>
     <nav>
         <button onclick="showSection('inventory')">Inventory</button>
         <button onclick="showSection('billing')">Billing</button>
+        <button onclick="showSection('orders')">Orders</button>
     </nav>
 
     <div id="inventory-section" class="section">
@@ -30,6 +32,10 @@
     <div id="billing-section" class="section">
         <h1>Billing</h1>
         <div>
+<!-- Search Bar for Billing Items -->
+            <input type="text" id="search-bar" placeholder="Search for items" oninput="filterInventory()">
+            <ul id="search-results"></ul>
+
             <input type="text" id="billing-barcode" placeholder="Scan Barcode">
             <button onclick="scanBarcode()">Add to Billing</button>
             <button onclick="toggleBillingCamera()">Use Camera</button>
@@ -41,14 +47,23 @@
             <input type="text" id="customer-name" placeholder="Customer Name">
             <input type="text" id="customer-phone" placeholder="Customer Phone">
             <button onclick="printBill()">Print Bill</button>
+            <button onclick="saveOrder()">Save Order</button>
         </div>
         <h2>Total: ₹<span id="total-price">0.00</span></h2>
     </div>
+
+    <div id="orders-section" class="section">
+        <h1>Saved Orders</h1>
+        <input type="text" id="order-search" placeholder="Search by customer name or order number">
+        <button onclick="searchOrders()">Search</button>
+        <ul id="saved-orders-list"></ul>
+    </div>
+    <!-- Add this to your HTML file -->
+
+
 
     <script src="https://unpkg.com/@zxing/library@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
-
-
