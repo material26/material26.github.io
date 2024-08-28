@@ -5,11 +5,13 @@ let billingScannerActive = false;
 let currentCameraIndex = 0;
 let codeReader = new ZXing.BrowserBarcodeReader();
 let availableCameras = [];
+let orders = []; // Array to store saved orders
 
 // Show a specific section
 function showSection(section) {
     document.getElementById('inventory-section').style.display = section === 'inventory' ? 'block' : 'none';
     document.getElementById('billing-section').style.display = section === 'billing' ? 'block' : 'none';
+    document.getElementById('orders-section').style.display = section === 'orders' ? 'block' : 'none';
 }
 
 function addProduct() {
@@ -145,7 +147,8 @@ function updateQuantity(index, newQuantity) {
 }
 
 
-// Print the bill as a PDF
+let orderNumber = 19564; // Initialize order number (you may want to use a more robust method for this)
+
 function printBill() {
     const customerName = document.getElementById('customer-name').value;
     const customerPhone = document.getElementById('customer-phone').value;
@@ -157,6 +160,9 @@ function printBill() {
         const formattedDate = currentDate.toLocaleDateString();
         const formattedTime = currentDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
+        // Generate unique order number
+        const uniqueOrderNumber = `ORD-${orderNumber++}`;
+        
         // Header Section
         doc.setFontSize(16);
         doc.setFont("helvetica", "bold");
@@ -166,8 +172,17 @@ function printBill() {
         doc.text('Narayan Nagar, Latur, India', 105, 18, { align: 'center' });
         doc.text('9156540291', 105, 26, { align: 'center' });
 
-        // Date, Time, and Customer Details
+        // Order Number and Barcode
         doc.setFontSize(12);
+        
+        
+        // Add barcode
+        const barcodeCanvas = document.createElement('canvas');
+        JsBarcode(barcodeCanvas, uniqueOrderNumber, { format: "CODE39" });
+        const barcodeDataURL = barcodeCanvas.toDataURL("image/png");
+        doc.addImage(barcodeDataURL, 'PNG', 170, 20, 30, 10); // Adjust the position and size as needed
+
+        // Date, Time, and Customer Details
         doc.text(`Date: ${formattedDate}`, 15, 40);
         doc.text(`Time: ${formattedTime}`, 15, 46);
         doc.text(`Customer Name: ${customerName}`, 15, 52);
@@ -205,15 +220,16 @@ function printBill() {
         doc.setFontSize(14);
         doc.text('Thank you for choosing us!', 105, y, { align: 'center' });
         doc.setFontSize(12);
-        
 
         // Save the PDF with the customer name in the filename
-        const fileName = `receipt_${customerName.replace(/\s+/g, '_')}.pdf`;
+        const fileName = `receipt_${uniqueOrderNumber}.pdf`;
         doc.save(fileName);
     } else {
         alert('Please enter customer name and phone number.');
     }
 }
+
+
 
 
 
@@ -307,6 +323,148 @@ function loadInventory() {
     displayInventory();
 }
 
+function filterInventory() {
+    const searchValue = document.getElementById('search-bar').value.toLowerCase();
+    const searchResults = document.getElementById('search-results');
+    searchResults.innerHTML = '';
+
+    const filteredProducts = products.filter(product => product.name.toLowerCase().includes(searchValue));
+
+    filteredProducts.forEach(product => {
+        const li = document.createElement('li');
+        li.textContent = `${product.name} - Barcode: ${product.barcode} - Price: ₹${product.price.toFixed(2)}`;
+        li.onclick = () => addItemToBilling(product);
+        searchResults.appendChild(li);
+    });
+}
+
+function addItemToBilling(product) {
+    const existingItem = billingItems.find(item => item.barcode === product.barcode);
+
+    if (existingItem) {
+        existingItem.quantity++;
+    } else {
+        billingItems.push({ ...product, quantity: 1 });
+    }
+
+    displayBilling();
+    document.getElementById('search-bar').value = '';
+    document.getElementById('search-results').innerHTML = '';
+}
+
+//Save the current billing list as an order
+function saveOrder() {
+    const customerName = document.getElementById('customer-name').value;
+    const customerPhone = document.getElementById('customer-phone').value;
+
+    if (customerName && customerPhone) {
+        const order = {
+            customerName,
+            customerPhone,
+            items: billingItems,
+            orderNumber: Date.now() // Use timestamp as unique order number
+        };
+
+        orders.push(order);
+        saveOrders(); // Save orders to local storage
+        displayOrders(); // Update orders display
+    } else {
+        alert('Please enter customer name and phone number.');
+    }
+}
+
+// Save order to local storage
+function saveOrder() {
+    const customerName = document.getElementById('customer-name').value;
+    const customerPhone = document.getElementById('customer-phone').value;
+
+    if (customerName && customerPhone) {
+        const uniqueOrderNumber = `ORD-${orderNumber++}`;
+        const order = {
+            orderNumber: uniqueOrderNumber,
+            customerName,
+            customerPhone,
+            items: [...billingItems]
+        };
+
+        let savedOrders = JSON.parse(localStorage.getItem('savedOrders')) || [];
+        savedOrders.push(order);
+        localStorage.setItem('savedOrders', JSON.stringify(savedOrders));
+
+        // Reset billing items and clear form
+        billingItems = [];
+        displayBilling();
+        clearForm();
+        displaySavedOrders();
+    } else {
+        alert('Please enter customer name and phone number.');
+    }
+}
+
+// Display saved orders
+function displaySavedOrders() {
+    const savedOrdersList = document.getElementById('saved-orders-list');
+    savedOrdersList.innerHTML = '';
+
+    let savedOrders = JSON.parse(localStorage.getItem('savedOrders')) || [];
+
+    savedOrders.forEach(order => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+            Order Number: ${order.orderNumber} - Customer Name: ${order.customerName} - Phone: ${order.customerPhone}
+            <button onclick="viewOrderDetails('${order.orderNumber}')">View Details</button>
+            <button onclick="deleteOrder('${order.orderNumber}')">Delete</button>
+        `;
+        savedOrdersList.appendChild(li);
+    });
+}
+
+// Search saved orders
+function searchOrders() {
+    const searchText = document.getElementById('order-search').value.toLowerCase();
+    const savedOrdersList = document.getElementById('saved-orders-list');
+    savedOrdersList.innerHTML = '';
+
+    let savedOrders = JSON.parse(localStorage.getItem('savedOrders')) || [];
+
+    const filteredOrders = savedOrders.filter(order =>
+        order.customerName.toLowerCase().includes(searchText) ||
+        order.orderNumber.toLowerCase().includes(searchText)
+    );
+
+    filteredOrders.forEach(order => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+            Order Number: ${order.orderNumber} - Customer Name: ${order.customerName} - Phone: ${order.customerPhone}
+            <button onclick="viewOrderDetails('${order.orderNumber}')">View Details</button>
+            <button onclick="deleteOrder('${order.orderNumber}')">Delete</button>
+        `;
+        savedOrdersList.appendChild(li);
+    });
+}
+
+// View order details
+function viewOrderDetails(orderNumber) {
+    let savedOrders = JSON.parse(localStorage.getItem('savedOrders')) || [];
+    const order = savedOrders.find(o => o.orderNumber === orderNumber);
+    if (order) {
+        // Display order details (you can customize this)
+        alert(`Order Number: ${order.orderNumber}\nCustomer Name: ${order.customerName}\nPhone: ${order.customerPhone}\nItems: ${order.items.map(item => `${item.name} - ${item.quantity} @ ${item.price}`).join(', ')}`);
+    } else {
+        alert('Order not found.');
+    }
+}
+
+// Delete an order
+function deleteOrder(orderNumber) {
+    let savedOrders = JSON.parse(localStorage.getItem('savedOrders')) || [];
+    savedOrders = savedOrders.filter(o => o.orderNumber !== orderNumber);
+    localStorage.setItem('savedOrders', JSON.stringify(savedOrders));
+    displaySavedOrders();
+}
+
 
 // Initialize the app
 loadInventory();
+loadOrders();
+displaySavedOrders();
