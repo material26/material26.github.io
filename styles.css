@@ -58,6 +58,30 @@ button:hover {
     background-color: #276f98;
 }
 
+#search-bar {
+    width: 100%;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    margin: 10px 0;
+}
+
+#search-results {
+    list-style-type: none;
+    padding: 0;
+}
+
+#search-results li {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+    cursor: pointer;
+}
+
+#search-results li:hover {
+    background-color: #f0f0f0;
+}
+
+
 #inventory-list {
     list-style-type: none;
     padding: 0;
